@@ -62,22 +62,21 @@ class RestaurantPizza(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     price = db.Column(db.Integer, nullable=False)
 
-    # Define relationships
-    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'))
-    pizza_id = db.Column(db.Integer, db.ForeignKey('pizzas.id'))
+    # Define foreign keys for relationships
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False)
+    pizza_id = db.Column(db.Integer, db.ForeignKey('pizzas.id', ondelete='CASCADE'), nullable=False)
 
+    # Define relationships
     restaurant = relationship(
         "Restaurant",
-        backref=backref("restaurant_pizzas", cascade="all, delete"),
-        cascade="all, delete"
+        backref=backref("restaurant_pizzas", cascade="all, delete-orphan")
     )
     pizza = relationship(
         "Pizza",
-        backref=backref("restaurant_pizzas", cascade="all, delete"),
-        cascade="all, delete"
+        backref=backref("restaurant_pizzas", cascade="all, delete-orphan")
     )
 
-    # Define validation
+    # Define validation for price
     @validates('price')
     def validate_price(self, key, price):
         if not (1 <= price <= 30):
@@ -88,7 +87,8 @@ class RestaurantPizza(db.Model, SerializerMixin):
     serialize_rules = ('-restaurant', '-pizza',)
 
     def __repr__(self):
-        return f"<RestaurantPizza ${self.price}>"
+        return f"<RestaurantPizza price={self.price}>"
+
 
 @app.route('/restaurants', methods=['GET'])
 def get_restaurants():
